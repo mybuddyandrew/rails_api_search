@@ -1,45 +1,80 @@
-# rails_api_search MCP server
+# Rails API Search MCP Server
 
-A MCP server 
+An MCP server that provides search functionality for Rails API documentation, with a focus on ActiveRecord documentation.
 
 ## Components
 
 ### Resources
 
-The server implements a simple note storage system with:
-- Custom note:// URI scheme for accessing individual notes
-- Each note resource has a name, description and text/plain mimetype
+The server provides access to Rails API documentation through:
+- Custom `rails-api://` URI scheme (e.g., `rails-api://activerecord`)
+- Documentation content served as text/html mimetype
+- Currently implements ActiveRecord documentation section
 
-### Prompts
+### Search Tool
 
-The server provides a single prompt:
-- summarize-notes: Creates summaries of all stored notes
-  - Optional "style" argument to control detail level (brief/detailed)
-  - Generates prompt combining all current notes with style preference
+The server implements a powerful search tool with the following capabilities:
 
-### Tools
+#### Search Parameters
+```json
+{
+  "query": "string",     // Required: Search term
+  "section": "string",   // Optional: Documentation section (default: "activerecord")
+  "limit": "integer"     // Optional: Max results to return (default: 10)
+}
+```
 
-The server implements one tool:
-- add-note: Adds a new note to the server
-  - Takes "name" and "content" as required string arguments
-  - Updates server state and notifies clients of resource changes
+#### Search Results
+Returns JSON formatted results including:
+- Matched sections with titles and content
+- Relevance scores
+- Direct path links to sections
+- Timestamp of search
+- Total number of matches
 
-## Configuration
+Example response:
+```json
+{
+  "matches": [
+    {
+      "title": "Section Title",
+      "content": "Matched content...",
+      "path": "#section-id",
+      "relevance": 0.75
+    }
+  ],
+  "total": 1,
+  "query": "search term",
+  "timestamp": "2024-03-21T10:00:00.000Z"
+}
+```
 
-[TODO: Add configuration details specific to your implementation]
+## Setup
 
-## Quickstart
+### Prerequisites
+- Python 3.12 or higher
+- Rails API documentation file (`rails_api.html`) in the working directory
 
-### Install
+### Dependencies
+```toml
+dependencies = [
+    "httpx",
+    "beautifulsoup4",
+    "python-dotenv",
+    "mcp>=0.1.0",
+]
+```
 
-#### Claude Desktop
+### Installation
+
+#### Claude Desktop Configuration
 
 On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 
 <details>
-  <summary>Development/Unpublished Servers Configuration</summary>
-  ```
+  <summary>Development Configuration</summary>
+  ```json
   "mcpServers": {
     "rails_api_search": {
       "command": "uv",
@@ -55,8 +90,8 @@ On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 </details>
 
 <details>
-  <summary>Published Servers Configuration</summary>
-  ```
+  <summary>Production Configuration</summary>
+  ```json
   "mcpServers": {
     "rails_api_search": {
       "command": "uvx",
@@ -72,40 +107,43 @@ On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 
 ### Building and Publishing
 
-To prepare the package for distribution:
-
-1. Sync dependencies and update lockfile:
+1. Sync dependencies:
 ```bash
 uv sync
 ```
 
-2. Build package distributions:
+2. Build package:
 ```bash
 uv build
 ```
-
-This will create source and wheel distributions in the `dist/` directory.
 
 3. Publish to PyPI:
 ```bash
 uv publish
 ```
 
-Note: You'll need to set PyPI credentials via environment variables or command flags:
+Required PyPI credentials:
 - Token: `--token` or `UV_PUBLISH_TOKEN`
 - Or username/password: `--username`/`UV_PUBLISH_USERNAME` and `--password`/`UV_PUBLISH_PASSWORD`
 
+### Testing
+
+Run tests with:
+```bash
+pytest
+```
+
+Test configuration is set up for:
+- Strict asyncio mode
+- Function-scoped test loops
+- Test discovery in `tests/` directory
+
 ### Debugging
 
-Since MCP servers run over stdio, debugging can be challenging. For the best debugging
-experience, we strongly recommend using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector).
-
-
-You can launch the MCP Inspector via [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) with this command:
+For debugging, use the MCP Inspector:
 
 ```bash
 npx @modelcontextprotocol/inspector uv --directory /Users/andrewhodson/Desktop/rails_api_search run rails-api-search
 ```
 
-
-Upon launching, the Inspector will display a URL that you can access in your browser to begin debugging.
+The inspector provides a web interface for monitoring server communication and debugging issues.
